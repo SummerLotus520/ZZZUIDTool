@@ -38,10 +38,26 @@ jobs:
       shell: bash
 
     - name: Create Release and Upload Release Asset
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: action
-        name: ${{ github.sha }}
-        draft: false
-        prerelease: false
-        files: ./action-generate/*
+      run: |
+        # 获取本次操作的commit的SHA值
+        COMMIT_SHA=$(git rev-parse HEAD)
+
+        # 创建一个新的release
+        RELEASE_ID=$(curl -s -X POST -H "Authorization: token $PAT" \
+          -d '{
+          "tag_name": "action",
+          "target_commitish": "'$COMMIT_SHA'",
+          "name": "'$COMMIT_SHA'",
+          "draft": false,
+          "prerelease": false
+        }' https://api.github.com/repos/$GITHUB_REPOSITORY/releases | jq -r .id)
+
+        # 将生成的exe文件上传到这个release中
+        for file in ./action-generate/*.exe; do
+          curl -s -X POST -H "Authorization: token $PAT" \
+            -H "Content-Type: $(file -b --mime-type $file)" \
+            --data-binary @$file \
+            "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?name=$(basename $file)"
+        done
+      env:
+        PAT: ${{ secrets.PAT }}
