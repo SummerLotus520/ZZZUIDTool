@@ -37,6 +37,12 @@ jobs:
         mv ./dist/*.exe ./action-generate/
       shell: bash
 
+    - name: Upload executables
+      uses: actions/upload-artifact@v2
+      with:
+        name: executables
+        path: ./action-generate/*.exe
+
     - name: Create Release and Upload Release Asset
       run: |
         # 获取本次操作的commit的SHA值
