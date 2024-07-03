@@ -37,6 +37,19 @@ jobs:
         mv ./dist/*.exe ./action-generate/
       shell: bash
 
+    - name: Get existing tag
+      id: get_tag
+      uses: actions/github-script@v5
+      with:
+        script: |
+          const tagRef = await github.rest.git.getRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: 'tags/action',
+          });
+          return tagRef.data.object.sha;
+        result-encoding: string
+
     - name: Create Release and Upload Release Asset
       uses: softprops/action-gh-release@v1
       with:
